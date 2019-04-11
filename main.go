@@ -41,7 +41,7 @@ func currentSsid() string {
 	return ""
 }
 
-func loginPremiumWi2(id string, password string) string {
+func loginPremiumWi2(id string, password string) int {
 	timeout := 10 * time.Second
 	client := http.Client{Timeout: timeout}
 
@@ -51,12 +51,12 @@ func loginPremiumWi2(id string, password string) string {
 
 	resp, err := client.PostForm(premiumWi2Url, data)
 	if err != nil {
-		log.Fatal("request failed")
+		log.Fatal(err)
 	}
-	return resp.Status
+	return resp.StatusCode
 }
 
-func loginTokyoTech(username string, password string) string {
+func loginTokyoTech(username string, password string) int {
 	timeout := 30 * time.Second
 	client := http.Client{Timeout: timeout}
 
@@ -69,7 +69,7 @@ func loginTokyoTech(username string, password string) string {
 	if err != nil {
 		log.Fatal("request failed")
 	}
-	return resp.Status
+	return resp.StatusCode
 }
 
 func main() {
@@ -78,7 +78,7 @@ func main() {
 	config := readConfig(filepath.Join(dir, ".config/wifilogin/config.json"))
 
 	ssid := currentSsid()
-	status := ""
+	status := 0
 	switch ssid {
 	case "Wi2_club":
 		status = loginPremiumWi2(config.Econnect.Id, config.Econnect.Password)
@@ -86,12 +86,12 @@ func main() {
 		status = loginTokyoTech(config.TokyoTech.Username, config.TokyoTech.Password)
 	}
 
-	if status == "200" {
-		log.Printf("login to SSID \"%s\" is successful with status code \"%s\"", ssid, status)
+	if status == 200 {
+		log.Printf("login to SSID \"%s\" is successful with status code \"%d\"", ssid, status)
 		return
 	}
-	if status != "" {
-		log.Fatalf("login to SSID \"%s\" failed with status code \"%s\"", ssid, status)
+	if status != 0 {
+		log.Fatalf("login to SSID \"%s\" failed with status code \"%d\"", ssid, status)
 		return
 	}
 }
