@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -41,7 +42,7 @@ func currentSsid() string {
 	return ""
 }
 
-func loginPremiumWi2(id string, password string) int {
+func loginPremiumWi2(id string, password string) (int, error) {
 	timeout := 10 * time.Second
 	client := http.Client{Timeout: timeout}
 
@@ -51,12 +52,12 @@ func loginPremiumWi2(id string, password string) int {
 
 	resp, err := client.PostForm(premiumWi2Url, data)
 	if err != nil {
-		log.Fatal(err)
+		return 0, err
 	}
-	return resp.StatusCode
+	return resp.StatusCode, nil
 }
 
-func loginTokyoTech(username string, password string) int {
+func loginTokyoTech(username string, password string) (int, error) {
 	timeout := 30 * time.Second
 	client := http.Client{Timeout: timeout}
 
@@ -67,9 +68,9 @@ func loginTokyoTech(username string, password string) int {
 
 	resp, err := client.PostForm(tokyoTechUrl, data)
 	if err != nil {
-		log.Fatal("request failed")
+		return 0, err
 	}
-	return resp.StatusCode
+	return resp.StatusCode, nil
 }
 
 func main() {
@@ -77,21 +78,29 @@ func main() {
 	dir := usr.HomeDir
 	config := readConfig(filepath.Join(dir, ".config/wifilogin/config.json"))
 
+	var status int
+	var err error
 	ssid := currentSsid()
-	status := 0
 	switch ssid {
 	case "Wi2_club":
-		status = loginPremiumWi2(config.Econnect.Id, config.Econnect.Password)
+		notify("Attempt to login", fmt.Sprintf("Attempt to login SSID \"%s\"", ssid))
+		status, err = loginPremiumWi2(config.Econnect.Id, config.Econnect.Password)
 	case "TokyoTech":
-		status = loginTokyoTech(config.TokyoTech.Username, config.TokyoTech.Password)
+		notify("Attempt to login", fmt.Sprintf("Attempt to login SSID \"%s\"", ssid))
+		status, err = loginTokyoTech(config.TokyoTech.Username, config.TokyoTech.Password)
 	}
 
+	if err != nil {
+		notify("Login Failed", fmt.Sprintf("HTTP request for login to SSID \"%s\" failed", ssid))
+		log.Fatal(err)
+	}
 	if status == 200 {
-		log.Printf("login to SSID \"%s\" is successful with status code \"%d\"", ssid, status)
+		notify("Login Succeeded!", fmt.Sprintf("Login to SSID \"%s\" succeeded!", ssid))
+		log.Printf("login to SSID \"%s\" was successful with status code \"%d\"", ssid, status)
 		return
 	}
 	if status != 0 {
+		notify("Login Failed", fmt.Sprintf("Login to SSID \"%s\" failed.", ssid))
 		log.Fatalf("login to SSID \"%s\" failed with status code \"%d\"", ssid, status)
-		return
 	}
 }
