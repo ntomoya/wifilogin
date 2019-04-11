@@ -47,7 +47,7 @@ func loginPremiumWi2(id string, password string) string {
 
 	data := url.Values{}
 	data.Add("id", id)
-	data.Add("password", password)
+	data.Add("pass", password)
 
 	resp, err := client.PostForm(premiumWi2Url, data)
 	if err != nil {
