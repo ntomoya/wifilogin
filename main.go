@@ -20,16 +20,20 @@ const (
 	tokyoTechUrl  = "https://wlanauth.noc.titech.ac.jp/login.html"
 )
 
-func airportInfo() string {
+func airportInfo() (string, error) {
 	out, err := exec.Command(airportPath, airportOption).Output()
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-	return string(out)
+	return string(out), nil
 }
 
 func currentSsid() string {
-	info := airportInfo()
+	info, err := airportInfo()
+	if err != nil {
+		// FIXME: Do not logging here
+		log.Fatal(err)
+	}
 	lines := strings.Split(info, "\n")
 	// split output by new line
 	for _, line := range lines {
