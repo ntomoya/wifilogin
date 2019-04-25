@@ -85,15 +85,20 @@ func main() {
 	var status int
 	var err error
 	ssid := currentSsid()
-	switch ssid {
-	case "Wi2_club":
-		notify("Attempt to login", fmt.Sprintf("Attempt to login SSID \"%s\"", ssid))
-		status, err = loginPremiumWi2(config.Econnect.Id, config.Econnect.Password)
-	case "TokyoTech":
-		notify("Attempt to login", fmt.Sprintf("Attempt to login SSID \"%s\"", ssid))
-		status, err = loginTokyoTech(config.TokyoTech.Username, config.TokyoTech.Password)
+	for i := 0; i < 3; i++ {
+		time.Sleep(3 * time.Second)
+		switch ssid {
+		case "Wi2_club":
+			notify("Attempt to login", fmt.Sprintf("Attempt to login SSID \"%s\"", ssid))
+			status, err = loginPremiumWi2(config.Econnect.Id, config.Econnect.Password)
+		case "TokyoTech":
+			notify("Attempt to login", fmt.Sprintf("Attempt to login SSID \"%s\"", ssid))
+			status, err = loginTokyoTech(config.TokyoTech.Username, config.TokyoTech.Password)
+		}
+		if err == nil {
+			break
+		}
 	}
-
 	if err != nil {
 		notify("Login Failed", fmt.Sprintf("HTTP request for login to SSID \"%s\" failed", ssid))
 		log.Fatal(err)
